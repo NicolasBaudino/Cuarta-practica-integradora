@@ -36,8 +36,9 @@ router.get("/error", (req, res) => {
     res.render("error");
 })
 
-router.get("/premium/:uid", async (req,res)=>{
+router.get("/premium/:uid", uploader.array('documents'), async (req,res)=>{
     try {
+        const files = req.files;
         const userId = req.params.uid;
         const user = await userModel.findById(userId);
 
@@ -45,7 +46,23 @@ router.get("/premium/:uid", async (req,res)=>{
             return res.status(404).send("User not found");
         }
 
+        if (!req.files){
+            return res.status(400).send({ status: "error", message: "No files were attached"})
+        }
+        
+        if (req.files.length !== 3){
+            return res.status(400).send({ status: "error", message: "You must attach exactly 3 files"})
+        }
+
+        const documents = files.map(file => ({
+            name: file.filename, 
+            reference: file.path
+        }));
+
+        user.documents = [...user.documents, ...documents]
+
         user.role = user.role === 'user' ? 'premium' : 'user';
+
         await user.save();
 
         res.render('profile', { user: new UserDto(user) });

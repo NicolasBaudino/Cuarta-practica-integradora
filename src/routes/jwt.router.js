@@ -76,38 +76,21 @@ router.post("/login", async (req, res) => {
 
 });
 
-router.post('/register', passport.authenticate('register', { session: false }), uploader.single('avatar'), async (req, res) => {
-  try {
-    
-      const file = req.file;
-      const user = req.user;
-      console.log("REQ: ", req)
-      console.log("BODY: ", req.body)
-      console.log("FILE: ", req.file);
-      console.log("FILES: ", req.files)
-      if (!user) {
-          return res.status(404).send("User not found");
-      }
-
-      // if (!req.file){
-      //     return res.status(400).send({ status: "error", message: "No file attached"})
-      // }
-
-      const avatar = {
-          name: file.filename, 
-          reference: file.path
-      };
-
-      user.avatar = avatar;
-
-      await user.save();
-      console.log("Registering user");
-      res.status(200).send({ status: "success", message: "User created", data: req.user });
+router.post('/register', uploader.single('avatar'), passport.authenticate('register', { session: false }), async (req, res) => {
+  if (!req.user) {
+      return res.status(404).send({ status: "error", message: "User not found" });
   }
-  catch (error) {
-      console.error("Error at adding a file: ", error);
-      res.status(500).send("Internal server error");
+  if (!req.file) {
+      return res.status(400).send({ status: "error", message: "No file attached" });
   }
+  const file = req.file;
+  const user = req.user;
+  user.avatar = {
+      name: file.filename,
+      reference: file.path
+  };
+  await user.save();
+  res.status(200).send({ status: "success", message: "User created", data: user });
 });
 
 router.post("/recover-password", async(req, res) => {

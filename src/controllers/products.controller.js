@@ -28,7 +28,11 @@ export const getProductByIdController = async (req, res) => {
 
 export const addProductController = async (req, res) => {
     const product = req.body;
-  
+
+    if (req.file) {
+      product.thumbnails = req.file.path;
+    }
+
     try {
       if (
         product.title === undefined ||
